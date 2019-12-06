@@ -1,0 +1,381 @@
+swagger: '2.0'
+info:
+  description: BitWaves Judge Board API documentation
+  version: 1.0.0
+  title: BitWaves Judge Board API Documentation
+  contact:
+    email: msrlancern@126.com
+
+tags:
+  - name: judges
+    description: Judge node related APIs
+  - name: submissions
+    description: Submission related APIs
+  - name: archives
+    description: Problem archive related APIs
+
+paths:
+  /judges:
+    get:
+      summary: Get all active judge nodes online
+      description: Get all active judge nodes online
+      tags:
+        - judges
+      responses:
+        200:
+          description: Operation completed successfully
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/JudgeNodeInfo'
+    patch:
+      summary: Patches the information about a judge node.
+      description: Patches the information about a judge node. This is typically called a heartbeat. The requests must
+          be made through a HTTPS session with the client holding valid judge node certificate.
+      tags:
+        - judges
+      parameters:
+        - in: body
+          name: data
+          description: Heartbeat information.
+          required: true
+          schema:
+            $ref: '#/definitions/HeartbeatInfo'
+      responses:
+        200:
+          description: Operation completed successfully.
+        400:
+          description: Invalid request data.
+        401:
+          description: No Authorization header are given or the authorization information has already expired.
+        403:
+          description: Invalid authorization information.
+
+  /submissions:
+    get:
+      summary: Get an unjudged submission from the judge queue.
+      description: Get an unjudged submission from the judge queue. The requests must be made through a HTTPS session
+          with the client holding valid judge node certificate.
+      tags:
+        - submissions
+      responses:
+        200:
+          description: Operation completed successfully.
+          schema:
+            $ref: '#/definitions/SubmissionInfo'
+        204:
+          description: No submissions are pending to judge.
+        401:
+          description: No authorization information provided or the authorization information provided has already
+            expired.
+        403:
+          description: Invalid authorization information.
+  /submissions/{submissionId}:
+    patch:
+      summary: Submit the judge result of a submission.
+      description: Submit the judge result of a submission. The requests must be made through a HTTPS session with the
+          client holding valid judge node certificate.
+      tags:
+        - submissions
+      parameters:
+        - in: path
+          name: submissionId
+          required: true
+          type: string
+          description: Id of the submission.
+        - in: body
+          name: data
+          required: true
+          description: Judge result of the submission.
+          schema:
+            $ref: '#/definitions/JudgeResult'
+      responses:
+        200:
+          description: Operation completed successfully.
+        401:
+          description: No authorization principle provided or the authorization principle has already expired.
+        403:
+          description: Invalid authorization principle.
+        404:
+          description: No such submission found.
+
+  /archives/{archiveId}:
+    get:
+      summary: Get the specified test data archive.
+      description: Get the specified test data archive. The requests must be made through a HTTPS session with the
+          client holding valid judge node certificate.
+      tags:
+        - archives
+      parameters:
+        - in: path
+          name: archiveId
+          type: string
+          description: The ID of the archive to retrieve.
+          required: true
+      responses:
+        200:
+          description: Operation completed successfully. The response body contains the raw data of the archive.
+        401:
+          description: No authorization principles are provided or the provided authorization priciple has already
+              expired.
+        403:
+          description: Invalid authorization principe.
+        404:
+          description: No such archive.
+
+definitions:
+  HeartbeatInfo:
+    type: object
+    required:
+      - timestamp
+      - cpuUsage
+      - cores
+      - totalPhysicalMemory
+      - freePhysicalMemory
+      - swapFileSize
+    properties:
+      timestamp:
+        type: string
+        description: The sending type of the heartbeat packet.
+        example: "2019-12-01T19:00:24Z"
+      cpuUsage:
+        type: number
+        description: The overall CPU usage ratio of the judge node
+        minimum: 0
+        maximum: 1
+        example: 0.8
+      cores:
+        type: number
+        description: The number of CPU cores installed on the judge node
+        minimum: 1
+        example: 4
+      totalPhysicalMemory:
+        type: number
+        description: Total amount of physical memory installed on the judge node, in megabytes.
+        minimum: 1
+        example: 2048
+      freePhysicalMemory:
+        type: number
+        description: Total amount of physical memory that is free to use on the judge node, in megabytes.
+        minimum: 0
+        example: 128
+      swapFileSize:
+        type: number
+        description: The size of the swap file, in megabytes.
+        minimum: 0
+        example: 32
+
+  JudgeNodeInfo:
+    type: object
+    description: Provide information about an active judge node
+    required:
+      - address
+      - lastHeartBeat
+      - lastSeen
+      - status
+      - cpuUsage
+      - cores
+      - totalPhysicalMemory
+      - freePhysicalMemory
+      - swapFileSize
+    properties:
+      address:
+        type: string
+        description: The IP address of the judge node
+        example: "127.0.0.1"
+      lastHeartBeat:
+        type: string
+        description: Timestamp of the last heart beat packet sent by the judge node
+        example: "2019-12-01T19:00:24Z"
+      lastSeen:
+        type: string
+        description: Timestamp of the last request sent by the judge node
+        example: "2019-12-01T19:00:24Z"
+      status:
+        type: string
+        description: Status of the judge node
+        enum:
+          - Idle
+          - Judging
+      cpuUsage:
+        type: number
+        description: The overall CPU usage ratio of the judge node
+        minimum: 0
+        maximum: 1
+        example: 0.8
+      cores:
+        type: number
+        description: The number of CPU cores installed on the judge node
+        example: 4
+      totalPhysicalMemory:
+        type: number
+        description: Total amount of physical memory installed on the judge node, in megabytes.
+        example: 2048
+      freePhysicalMemory:
+        type: number
+        description: Total amount of physical memory that is free to use on the judge node, in megabytes.
+        example: 128
+      swapFileSize:
+        type: number
+        description: The size of the swap file, in megabytes.
+        example: 32
+
+  LanguageTriple:
+    type: object
+    description: Represent a language triple.
+    required:
+      - identifier
+      - dialect
+      - version
+    properties:
+      identifier:
+        type: string
+        description: Identifier of the language.
+        example: cpp
+      dialect:
+        type: string
+        description: Dialect of the language.
+        example: gnu
+      version:
+        type: string
+        description: Version of the language.
+        example: "11"
+  SubmissionInfo:
+    type: object
+    description: Provide information about a submission.
+    required:
+      - id
+      - archiveId
+      - language
+      - judgeMode
+      - timeLimit
+      - memoryLimit
+      - code
+    properties:
+      id:
+        type: string
+        description: Id of the submission.
+      archiveId:
+        type: string
+        description: Id of the archive containing test suite.
+      language:
+        $ref: '#/definitions/LanguageTriple'
+        description: Language triple of the solution.
+      judgeMode:
+        type: string
+        description: Judge mode.
+        enum:
+          - Standard
+          - SpecialJudge
+          - Interactive
+        example: Standard
+      timeLimit:
+        type: integer
+        description: CPU time limit of each test case, measured in milliseconds.
+        minimum: 500
+        maximum: 10000
+        example: 1000
+      memoryLimit:
+        type: integer
+        description: Memory limit of each test case, measured in megabytes.
+        minimum: 32
+        maximum: 1024
+        example: 256
+      code:
+        type: string
+        description: The source code of the solution.
+
+  TestCaseJudgeResult:
+    type: object
+    description: Provide judge result of a submission on a specific test case.
+    required:
+      - verdict
+      - time
+      - memory
+      - exitCode
+      - comment
+      - inputView
+      - answerView
+      - outputView
+    properties:
+      verdict:
+        type: string
+        description: Verdict on the test case.
+        enum:
+          - CompilationFailed
+          - Accepted
+          - WrongAnswer
+          - RuntimeError
+          - TimeLimitExceeded
+          - MemoryLimitExceeded
+          - IdlenessLimitExceeded
+          - BadSystemCall
+          - CheckerFailed
+          - InteractorFailed
+          - JudgeFailed
+      time:
+        type: integer
+        description: CPU time usage on the test case, measured in milliseconds.
+        example: 2514
+      memory:
+        type: integer
+        description: Memory usage on the test case, measured in milliseconds.
+        example: 14
+      exitCode:
+        type: integer
+        description: Exit code of the solution on the test case.
+        example: 0
+      comment:
+        type: string
+        description: Comment made by the judge.
+        example: "Ok accepted"
+      inputView:
+        type: string
+        description: View into the input data of the test case.
+        example: "1 2"
+      answerView:
+        type: string
+        description: View into the answer data of the test case.
+        example: "3"
+      outputView:
+        type: string
+        description: View into the output data of the solution on the test case.
+        example: "3"
+
+  JudgeResult:
+    type: object
+    description: Provide judge result of a submission.
+    required:
+      - verdict
+      - time
+      - memory
+      - testCases
+    properties:
+      verdict:
+        type: string
+        description: Overall verdict.
+        enum:
+          - CompilationFailed
+          - Accepted
+          - WrongAnswer
+          - RuntimeError
+          - TimeLimitExceeded
+          - MemoryLimitExceeded
+          - IdlenessLimitExceeded
+          - BadSystemCall
+          - CheckerFailed
+          - InteractorFailed
+          - JudgeFailed
+      time:
+        type: integer
+        description: The maximal time usage over all test cases, measured in milliseconds.
+        example: 2517
+      memory:
+        type: integer
+        description: The maximal memory usage over all test cases, measured in megabytes.
+        example: 52
+      testCases:
+        type: array
+        description: Detailed judge result of each test case.
+        items:
+          $ref: '#/definitions/TestCaseJudgeResult'
