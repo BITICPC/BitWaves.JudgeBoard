@@ -67,6 +67,7 @@ namespace BitWaves.JudgeBoard.Controllers
 
         // PATCH: /submissions/{submissionId}
         [HttpPatch("{submissionId}")]
+        [Authorize]
         public async Task<IActionResult> Patch(
             ObjectId submissionId,
             [FromBody] SubmissionJudgeResultModel model)
