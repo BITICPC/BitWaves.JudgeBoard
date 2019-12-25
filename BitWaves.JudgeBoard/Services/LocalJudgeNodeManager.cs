@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -10,12 +9,12 @@ namespace BitWaves.JudgeBoard.Services
 {
     /// <summary>
     /// Provide an implementation of <see cref="IJudgeNodeManager"/> that uses a locally maintained
-    /// <see cref="ConcurrentDictionary{TKey,TValue}"/> as the backing store.
+    /// <see cref="Dictionary{TKey,TValue}"/> as the backing store.
     /// </summary>
     internal sealed class LocalJudgeNodeManager : IJudgeNodeManager
     {
         private readonly JudgeNodeManagerOptions _options;
-        private readonly ConcurrentDictionary<IPAddress, JudgeNodeInfo> _store;
+        private readonly Dictionary<IPAddress, JudgeNodeInfo> _store;
 
         /// <summary>
         /// Initialize a new <see cref="LocalJudgeNodeManager"/> instance.
@@ -27,7 +26,37 @@ namespace BitWaves.JudgeBoard.Services
             Contract.NotNull(options, nameof(options));
 
             _options = options;
-            _store = new ConcurrentDictionary<IPAddress, JudgeNodeInfo>();
+            _store = new Dictionary<IPAddress, JudgeNodeInfo>();
+        }
+
+        /// <summary>
+        /// Lock the store and invokes the given callback on the internal store.
+        /// </summary>
+        /// <param name="callback">The callback to be invoked with the internal store.</param>
+        /// <typeparam name="T">The return type of the callback.</typeparam>
+        /// <returns>Whatever the given callback returns.</returns>
+        private T WithStore<T>(Func<Dictionary<IPAddress, JudgeNodeInfo>, T> callback)
+        {
+            Contract.NotNull(callback, nameof(callback));
+
+            lock (_store)
+            {
+                return callback(_store);
+            }
+        }
+
+        /// <summary>
+        /// Lock the store and invokes the given callback on the internal store.
+        /// </summary>
+        /// <param name="callback">The callback to be invoked with the internal store.</param>
+        private void WithStore(Action<Dictionary<IPAddress, JudgeNodeInfo>> callback)
+        {
+            Contract.NotNull(callback, nameof(callback));
+
+            lock (_store)
+            {
+                callback(_store);
+            }
         }
 
         /// <summary>
@@ -47,30 +76,9 @@ namespace BitWaves.JudgeBoard.Services
             return (unsigned & (unsigned - 1)) == 0;
         }
 
-        /// <inheritdoc />
-        public Task UpdateAsync(JudgeNodeInfo info)
-        {
-            Contract.NotNull(info, nameof(info));
-
-            _store.AddOrUpdate(info.Address, info, (_, old) =>
-            {
-                info.Status = old.Status;
-                return info;
-            });
-
-            // If the number of elements in the backing store hit an exponent of 2 then invoke RemoveExpired method
-            // to sweep out all expired judge nodes.
-            if (IsPowerOfTwo(_store.Count))
-            {
-                RemoveExpired();
-            }
-
-            return Task.CompletedTask;
-        }
-
         /// <summary>
         /// Perform a full scan over the backing store and removes those <see cref="JudgeNodeInfo"/> objects which have
-        /// expired already.
+        /// expired already. It is the caller's responsibility to lock the internal store before calling this method.
         /// </summary>
         private void RemoveExpired()
         {
@@ -88,15 +96,144 @@ namespace BitWaves.JudgeBoard.Services
 
             foreach (var key in expiredKeys)
             {
-                _store.TryRemove(key, out _);
+                _store.Remove(key);
             }
+        }
+
+        /// <summary>
+        /// Remove expired judge node record if the number of judge nodes registered is a power of 2. It is the caller's
+        /// responsibility to lock the internal store before calling this method.
+        /// </summary>
+        private void RemoveExpiredOnNecessary()
+        {
+            if (IsPowerOfTwo(_store.Count))
+            {
+                RemoveExpired();
+            }
+        }
+
+        /// <inheritdoc />
+        public Task UpdatePerformanceAsync(IPAddress address, JudgeNodePerformanceInfo performanceInfo)
+        {
+            Contract.NotNull(address, nameof(address));
+            Contract.NotNull(performanceInfo, nameof(performanceInfo));
+
+            WithStore(store =>
+            {
+                if (store.TryGetValue(address, out var info))
+                {
+                    info.Performance = performanceInfo;
+                    info.LastHeartBeat = DateTime.UtcNow;
+                    info.LastSeen = DateTime.UtcNow;
+                }
+                else
+                {
+                    var newInfo = new JudgeNodeInfo(address)
+                    {
+                        Performance = performanceInfo,
+                        LastHeartBeat = DateTime.UtcNow,
+                        LastSeen = DateTime.UtcNow
+                    };
+                    store.Add(address, newInfo);
+                    RemoveExpiredOnNecessary();
+                }
+            });
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task UpdateLastSeenAsync(IPAddress address)
+        {
+            Contract.NotNull(address, nameof(address));
+
+            WithStore(store =>
+            {
+                if (store.TryGetValue(address, out var info))
+                {
+                    info.LastSeen = DateTime.UtcNow;
+                }
+                else
+                {
+                    var newInfo = new JudgeNodeInfo(address)
+                    {
+                        LastSeen = DateTime.UtcNow
+                    };
+                    store.Add(address, newInfo);
+                    RemoveExpiredOnNecessary();
+                }
+            });
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task<bool> SetBlockedAsync(IPAddress address, bool blocked = true)
+        {
+            Contract.NotNull(address, nameof(address));
+
+            var ret = WithStore(store =>
+            {
+                if (!store.TryGetValue(address, out var info))
+                {
+                    return false;
+                }
+
+                info.IsBlocked = blocked;
+                return true;
+            });
+
+            return Task.FromResult(ret);
+        }
+
+        /// <inheritdoc />
+        public Task<bool> IsBlockedAsync(IPAddress address)
+        {
+            Contract.NotNull(address, nameof(address));
+
+            var ret = WithStore(store =>
+            {
+                if (!store.TryGetValue(address, out var info))
+                {
+                    // If the judge node cannot be found, then return true to ensure that submission information will
+                    // not leak by accident.
+                    return true;
+                }
+
+                return info.IsBlocked;
+            });
+
+            return Task.FromResult(ret);
+        }
+
+        /// <inheritdoc />
+        public Task<bool> IncreaseQueue(IPAddress address, int increment = 1)
+        {
+            Contract.NotNull(address, nameof(address));
+
+            var ret = WithStore(store =>
+            {
+                if (!store.TryGetValue(address, out var info))
+                {
+                    return false;
+                }
+
+                info.QueuedSubmissions += increment;
+                return true;
+            });
+
+            return Task.FromResult(ret);
         }
 
         /// <inheritdoc />
         public Task<JudgeNodeInfo[]> GetAllAsync()
         {
-            RemoveExpired();
-            return Task.FromResult(_store.Values.ToArray());
+            var ret = WithStore(store =>
+            {
+                RemoveExpired();
+                return store.Values.ToArray();
+            });
+            return Task.FromResult(ret);
         }
     }
 

@@ -28,39 +28,21 @@ namespace BitWaves.JudgeBoard.Models
         public DateTime LastSeen { get; set; }
 
         /// <summary>
-        /// Get or set the status of the judge node.
+        /// Get or set the number of queued submissions to the judge node.
         /// </summary>
-        [JsonProperty("status")]
-        public JudgeNodeStatus Status { get; set; }
+        [JsonProperty("queuedSubmissions")]
+        public int QueuedSubmissions { get; set; }
 
         /// <summary>
-        /// Get or set the CPU usage of the judge node, in percentage form.
+        /// Get or set whether to prevent sending submission information to this judge node.
         /// </summary>
-        [JsonProperty("cpuUsage")]
-        public double CpuUsage { get; set; }
+        [JsonProperty("isBlocked")]
+        public bool IsBlocked { get; set; }
 
         /// <summary>
-        /// Get or set the number of cores installed on the judge node.
+        /// Get or set the performance model.
         /// </summary>
-        [JsonProperty("cores")]
-        public int Cores { get; set; }
-
-        /// <summary>
-        /// Get or set the total physical memory installed on the judge node, in megabytes.
-        /// </summary>
-        [JsonProperty("totalPhysicalMemory")]
-        public long TotalPhysicalMemory { get; set; }
-
-        /// <summary>
-        /// Get or set the free physical memory on the judge node, in megabytes.
-        /// </summary>
-        [JsonProperty("freePhysicalMemory")]
-        public long FreePhysicalMemory { get; set; }
-
-        /// <summary>
-        /// Get or set the size of the swap file on the judge node, in megabytes.
-        /// </summary>
-        [JsonProperty("swapFileSize")]
-        public long SwapFileSize { get; set; }
+        [JsonProperty("performance")]
+        public JudgeNodePerformanceInfoModel Performance { get; set; }
     }
 }

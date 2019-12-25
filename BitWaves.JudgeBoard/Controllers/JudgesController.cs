@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -43,13 +42,8 @@ namespace BitWaves.JudgeBoard.Controllers
         {
             _logger.LogInformation("Heartbeat packet received from {0}", HttpContext.Connection.RemoteIpAddress);
 
-            model.Address = HttpContext.Connection.RemoteIpAddress;
-
-            var now = DateTime.UtcNow;
-            model.LastHeartBeat = now;
-            model.LastSeen = now;
-
-            await _judgeNodeManager.UpdateAsync(_mapper.Map<PatchJudgeNodeInfoModel, JudgeNodeInfo>(model));
+            var performance = _mapper.Map<PatchJudgeNodeInfoModel, JudgeNodePerformanceInfo>(model);
+            await _judgeNodeManager.UpdatePerformanceAsync(HttpContext.Connection.RemoteIpAddress, performance);
             return Ok();
         }
     }

@@ -20,6 +20,9 @@ namespace BitWaves.JudgeBoard.Services
             Address = address;
             LastHeartBeat = DateTime.UtcNow;
             LastSeen = DateTime.UtcNow;
+            QueuedSubmissions = 0;
+            IsBlocked = false;
+            Performance = null;
         }
 
         /// <summary>
@@ -38,33 +41,18 @@ namespace BitWaves.JudgeBoard.Services
         public DateTime LastSeen { get; set; }
 
         /// <summary>
-        /// Get or set the status of the judge.
+        /// Get or set the number of queued submissions to the judge node.
         /// </summary>
-        public JudgeNodeStatus Status { get; set; }
+        public int QueuedSubmissions { get; set; }
 
         /// <summary>
-        /// Get or set the overall CPU usage ratio of the judge node.
+        /// Get or set whether to prevent sending submission information to this judge node.
         /// </summary>
-        public double CpuUsage { get; set; }
+        public bool IsBlocked { get; set; }
 
         /// <summary>
-        /// Get or set the number of cores installed on the judge node.
+        /// Get or set the performance information about a judge node.
         /// </summary>
-        public int Cores { get; set; }
-
-        /// <summary>
-        /// Get or set the total physical memory installed on the judge node, measured in megabytes.
-        /// </summary>
-        public long TotalPhysicalMemory { get; set; }
-
-        /// <summary>
-        /// Get or set the free physical memory on the judge node, measured in megabytes.
-        /// </summary>
-        public long FreePhysicalMemory { get; set; }
-
-        /// <summary>
-        /// Get or set the swap file size, measured in megabytes.
-        /// </summary>
-        public long SwapFileSize { get; set; }
+        public JudgeNodePerformanceInfo Performance { get; set; }
     }
 }

@@ -25,25 +25,7 @@ namespace BitWaves.JudgeBoard.Models
         /// Get or set the language of the submission.
         /// </summary>
         [JsonProperty("language")]
-        public LanguageModel Language { get; set; }
-
-        /// <summary>
-        /// Get or set the judge mode.
-        /// </summary>
-        [JsonProperty("judgeMode")]
-        public ProblemJudgeMode JudgeMode { get; set; }
-
-        /// <summary>
-        /// Get or set the time limit, in milliseconds.
-        /// </summary>
-        [JsonProperty("timeLimit")]
-        public int TimeLimit { get; set; }
-
-        /// <summary>
-        /// Get or set the memory limit, in megabytes.
-        /// </summary>
-        [JsonProperty("memoryLimit")]
-        public int MemoryLimit { get; set; }
+        public LanguageModel LanguageTriple { get; set; }
 
         /// <summary>
         /// Get or set the code.

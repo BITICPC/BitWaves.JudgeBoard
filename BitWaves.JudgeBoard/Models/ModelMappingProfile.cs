@@ -26,9 +26,10 @@ namespace BitWaves.JudgeBoard.Models
         private void CreateOutputModelMappings()
         {
             CreateMap<JudgeNodeInfo, JudgeNodeInfoModel>();
+            CreateMap<JudgeNodePerformanceInfo, JudgeNodePerformanceInfoModel>();
             CreateMap<Submission, SubmissionModel>()
                 .ForMember(m => m.ArchiveId, opt => opt.Ignore());
-            CreateMap<Language, LanguageModel>();
+            CreateMap<LanguageTriple, LanguageModel>();
         }
 
         /// <summary>
@@ -45,8 +46,7 @@ namespace BitWaves.JudgeBoard.Models
         /// </summary>
         private void CreateUpdateModelMappings()
         {
-            CreateMap<PatchJudgeNodeInfoModel, JudgeNodeInfo>()
-                .ForMember(i => i.Status, opt => opt.Ignore());
+            CreateMap<PatchJudgeNodeInfoModel, JudgeNodePerformanceInfo>();
         }
     }
 }

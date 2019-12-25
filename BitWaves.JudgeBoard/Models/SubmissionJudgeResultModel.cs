@@ -15,6 +15,12 @@ namespace BitWaves.JudgeBoard.Models
         public Verdict Verdict { get; set; }
 
         /// <summary>
+        /// Get or set the compiler message.
+        /// </summary>
+        [JsonProperty("compilerMessage")]
+        public string CompilerMessage { get; set; }
+
+        /// <summary>
         /// Get or set the time usage, in milliseconds.
         /// </summary>
         [JsonProperty("time")]
@@ -30,6 +36,6 @@ namespace BitWaves.JudgeBoard.Models
         /// Get or set the judge results of all test cases.
         /// </summary>
         [JsonProperty("testCases")]
-        public TestCaseJudgeResultModel[] TestCases { get; set; }
+        public TestCaseJudgeResultModel[] TestCaseResults { get; set; }
     }
 }
