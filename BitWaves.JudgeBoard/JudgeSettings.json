@@ -1,0 +1,10 @@
+{
+  "Judge": {
+    "Authentication": {
+      "SessionExpiration": 1,
+      "ChallengeCertificate": "",
+      "JwtExpiration": 60,
+      "JwtCertificate": ""
+    }
+  }
+}

@@ -25,6 +25,9 @@ namespace BitWaves.JudgeBoard.Models
         /// </summary>
         private void CreateOutputModelMappings()
         {
+            CreateMap<JudgeAuthenticationSession, AuthenticationSessionModel>()
+                .ForMember(m => m.Id, opt => opt.MapFrom(s => s.SessionId))
+                .ForMember(m => m.Challenge, opt => opt.MapFrom(s => s.EncryptedChallenge));
             CreateMap<JudgeNodeInfo, JudgeNodeInfoModel>();
             CreateMap<JudgeNodePerformanceInfo, JudgeNodePerformanceInfoModel>();
             CreateMap<Submission, SubmissionModel>()

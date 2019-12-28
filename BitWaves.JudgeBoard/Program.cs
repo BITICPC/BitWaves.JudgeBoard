@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace BitWaves.JudgeBoard
 {
@@ -12,6 +13,10 @@ namespace BitWaves.JudgeBoard
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                   .ConfigureAppConfiguration((context, builder) =>
+                   {
+                       builder.AddJsonFile("JudgeSettings.json", optional: false);
+                   })
                    .UseStartup<Startup>();
     }
 }
