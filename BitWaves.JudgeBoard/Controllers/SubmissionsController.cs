@@ -3,6 +3,7 @@ using AutoMapper;
 using BitWaves.Data.Entities;
 using BitWaves.Data.Repositories;
 using BitWaves.JudgeBoard.Models;
+using BitWaves.JudgeBoard.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -15,12 +16,15 @@ namespace BitWaves.JudgeBoard.Controllers
     public sealed class SubmissionsController : ControllerBase
     {
         private readonly Repository _repo;
+        private readonly IJudgeNodeManager _manager;
         private readonly IMapper _mapper;
         private readonly ILogger<SubmissionsController> _logger;
 
-        public SubmissionsController(Repository repo, IMapper mapper, ILogger<SubmissionsController> logger)
+        public SubmissionsController(Repository repo, IJudgeNodeManager manager,
+                                     IMapper mapper, ILogger<SubmissionsController> logger)
         {
             _repo = repo;
+            _manager = manager;
             _mapper = mapper;
             _logger = logger;
         }
@@ -32,6 +36,13 @@ namespace BitWaves.JudgeBoard.Controllers
         {
             _logger.LogInformation("Fetching submission info for judge node {0}",
                                    HttpContext.Connection.RemoteIpAddress);
+
+            var address = HttpContext.Connection.RemoteIpAddress;
+            if (await _manager.IsBlockedAsync(address))
+            {
+                _logger.LogDebug("{} is blocked for fetching submissions. Respond with 204.", address);
+                return NoContent();
+            }
 
             while (true)
             {
