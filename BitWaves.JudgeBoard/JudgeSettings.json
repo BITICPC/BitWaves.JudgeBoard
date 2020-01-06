@@ -2,9 +2,9 @@
   "Judge": {
     "Authentication": {
       "SessionExpiration": 1,
-      "ChallengeCertificate": "",
+      "ChallengePublicKey": "",
       "JwtExpiration": 60,
-      "JwtCertificate": ""
+      "JwtSigningKey": ""
     }
   }
 }

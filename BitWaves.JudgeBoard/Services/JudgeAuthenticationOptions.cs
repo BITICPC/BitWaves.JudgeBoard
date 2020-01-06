@@ -1,6 +1,6 @@
 using System;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
+using BitWaves.JudgeBoard.Utils;
 
 namespace BitWaves.JudgeBoard.Services
 {
@@ -34,11 +34,11 @@ namespace BitWaves.JudgeBoard.Services
     public static class JudgeAuthenticationOptionsExtension
     {
         /// <summary>
-        /// Load the <see cref="JudgeAuthenticationOptions.JudgePublicKey"/> from the public key part of the specified
-        /// X509 certificate file.
+        /// Load the <see cref="JudgeAuthenticationOptions.JudgePublicKey"/> from the specified PEM file containing a
+        /// RSA public key.
         /// </summary>
         /// <param name="options">The <see cref="JudgeAuthenticationOptions"/> object.</param>
-        /// <param name="file">Path to the certificate file.</param>
+        /// <param name="file">Path to the PEM file containing public key.</param>
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="options"/> is null
         ///     or
@@ -49,11 +49,8 @@ namespace BitWaves.JudgeBoard.Services
             Contract.NotNull(options, nameof(options));
             Contract.NotNull(file, nameof(file));
 
-            var cert = new X509Certificate2(file);
-            var key = cert.GetRSAPublicKey();
-
             options.JudgePublicKey?.Dispose();
-            options.JudgePublicKey = key;
+            options.JudgePublicKey = Pem.ReadRsaKey(file);
         }
     }
 }

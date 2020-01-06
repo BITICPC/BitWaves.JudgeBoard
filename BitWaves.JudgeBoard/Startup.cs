@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Security.Cryptography.X509Certificates;
 using AutoMapper;
 using BitWaves.JudgeBoard.Models;
 using BitWaves.JudgeBoard.Services;
+using BitWaves.JudgeBoard.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,9 +36,8 @@ namespace BitWaves.JudgeBoard
         private SecurityKey GetJwtIssuerSigningKey()
         {
             var configSection = GetJudgeConfig();
-            var certFileName = configSection.GetValue<string>("JwtCertificate");
-            var cert = new X509Certificate2(certFileName);
-            var key = cert.GetRSAPrivateKey();
+            var keyFileName = configSection.GetValue<string>("JwtSigningKey");
+            var key = Pem.ReadRsaKey(keyFileName);
             return new RsaSecurityKey(key);
         }
 
@@ -82,7 +81,7 @@ namespace BitWaves.JudgeBoard
             {
                 var configSection = GetJudgeConfig();
                 options.Expiration = TimeSpan.FromMinutes(configSection.GetValue<int>("SessionExpiresIn"));
-                options.LoadJudgePublicKeyFromCertificate(configSection.GetValue<string>("ChallengeCertificate"));
+                options.LoadJudgePublicKeyFromCertificate(configSection.GetValue<string>("ChallengePublicKey"));
             });
             services.AddAutoMapper(typeof(ModelMappingProfile));
         }
