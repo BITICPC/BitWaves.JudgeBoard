@@ -91,6 +91,31 @@ paths:
           description: No Authorization header are given or the authorization information has already expired.
         403:
           description: Invalid authorization information.
+  /judges/{address}/block:
+    put:
+      summary: Change the block flag of a specified judge node.
+      description: Change the block flag of a specified judge node.
+      tags:
+        - judges
+      parameters:
+        - in: path
+          name: address
+          required: true
+          type: string
+          description: The address of the judge node
+        - in: query
+          name: blocked
+          required: false
+          type: boolean
+          description: Whether the judge node is blocked
+          default: true
+      responses:
+        200:
+          description: Operation completed successfully.
+        400:
+          description: Invalid request data.
+        404:
+          description: The judge node specified does not exist.
 
   /submissions:
     get:

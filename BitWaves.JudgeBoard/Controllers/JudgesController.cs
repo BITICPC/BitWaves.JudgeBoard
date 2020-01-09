@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using BitWaves.JudgeBoard.Models;
@@ -44,6 +45,27 @@ namespace BitWaves.JudgeBoard.Controllers
 
             var performance = _mapper.Map<PatchJudgeNodeInfoModel, JudgeNodePerformanceInfo>(model);
             await _judgeNodeManager.UpdatePerformanceAsync(HttpContext.Connection.RemoteIpAddress, performance);
+            return Ok();
+        }
+
+        // PUT: /judges/{address}/block
+        [HttpPut("{address}/block")]
+        public async Task<IActionResult> PutBlock(
+            string address,
+            [FromQuery(Name = "blocked")] bool blocked = true)
+        {
+            if (!IPAddress.TryParse(address, out var ipAddr))
+            {
+                ModelState.AddModelError(nameof(address), "invalid IP address.");
+                return ValidationProblem();
+            }
+
+            var ret = await _judgeNodeManager.SetBlockedAsync(ipAddr, blocked);
+            if (!ret)
+            {
+                return NotFound();
+            }
+
             return Ok();
         }
     }
